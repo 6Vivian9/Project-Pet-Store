@@ -1,3 +1,28 @@
+<?php
+    session_start();
+    require_once 'includes/config.php';
+
+    // Check if user is logged in and is an admin
+    if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+        header('Location: login.php');
+        exit();
+    }
+
+    // Fetch admin details from database
+    $stmt = $conn->prepare("SELECT username, email FROM users WHERE id = ? AND role = 'admin'");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $admin = $result->fetch_assoc();
+
+    // Fetch counts for dashboard
+    $pet_count = $conn->query("SELECT COUNT(*) FROM pets")->fetch_row()[0];
+    $owner_count = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'owner'")->fetch_row()[0];
+    $pending_appointments = $conn->query("SELECT COUNT(*) FROM appointments WHERE status = 'pending'")->fetch_row()[0];
+?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,15 +71,68 @@
     <!-- Main Content -->
     <div id="content">
         <header class="mb-4">
-            <h1 class="display-4">Dashboard</h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-4">Welcome, <?php echo htmlspecialchars($admin['username']); ?></h1>
+                <div class="d-flex align-items-center">
+                    <!-- Notifications -->
+                    <div class="dropdown me-3">
+                        <a href="#" class="text-dark position-relative" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell fs-4"></i>
+                            <?php if ($pending_appointments > 0): ?>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                <?php echo $pending_appointments; ?>
+                            </span>
+                            <?php endif; ?>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><a class="dropdown-item" href="appointments.php">Pending Appointments (<?php echo $pending_appointments; ?>)</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Profile -->
+                    <div class="dropdown">
+                        <a href="#" class="text-dark d-flex align-items-center" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle fs-4 me-2"></i>
+                            <span><?php echo htmlspecialchars($admin['username']); ?></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="settings.php"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <main>
-            <div class="card">
-                <div class="card-body">
-                    <?php
-                        echo "Welcome to PETRECORDS Admin Panel";
-                    ?>
+            <!-- Dashboard Stats -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-users me-2"></i>Total Pet Owners</h5>
+                            <h2><?php echo $owner_count; ?></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-paw me-2"></i>Registered Pets</h5>
+                            <h2><?php echo $pet_count; ?></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-calendar-check me-2"></i>Pending Appointments</h5>
+                            <h2><?php echo $pending_appointments; ?></h2>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
