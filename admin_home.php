@@ -2,20 +2,17 @@
     session_start();
     require_once 'includes/config.php';
 
-    // Check if user is logged in and is an admin
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
         header('Location: login.php');
         exit();
     }
 
-    // Fetch admin details from database
     $stmt = $conn->prepare("SELECT username, email FROM users WHERE id = ? AND role = 'admin'");
     $stmt->bind_param("i", $_SESSION['user_id']);
     $stmt->execute();
     $result = $stmt->get_result();
     $admin = $result->fetch_assoc();
 
-    // Fetch counts for dashboard
     $pet_count = $conn->query("SELECT COUNT(*) FROM pets")->fetch_row()[0];
     $owner_count = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'owner'")->fetch_row()[0];
     $pending_appointments = $conn->query("SELECT COUNT(*) FROM appointments WHERE status = 'pending'")->fetch_row()[0];
@@ -32,17 +29,16 @@
     <meta name="keywords" content="admin, dashboard, management">
     <meta name="author" content="Karl">
     <title>Admin Dashboard</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <!-- CSS -->
+    <link rel="icon" type="img/Icon.jpg" href="favicon.ico">
     <link rel="stylesheet" href="css/admin_css.css">
 </head>
 <body>
-    <!-- Sidebar -->
     <div id="sidebar">
-        <div class="logo">PETRECORDS</div>
+        <div class="logo d-flex align-items-center">
+            <img src="img/Logo.png" alt="Logo" class="me-2" style="width: 40px; height: 40px;">
+            <span>PETRECORDS</span>
+        </div>
         <div class="nav flex-column">
             <a href="admin_home.php" class="nav-link active">
                 <i class="fas fa-tachometer-alt"></i> Dashboard
